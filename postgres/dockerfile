@@ -1,0 +1,23 @@
+FROM archlinux:base
+
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm extra/postgresql
+RUN systemctl enable postgresql
+
+RUN mkdir /home/postgres \
+&& chown postgres /home/postgres -R \
+&& chmod 750 /home/postgres -R \
+&& mkdir /var/run/postgresql \
+&& chown -R postgres:postgres /var/run/postgresql
+
+USER postgres
+
+RUN initdb -D /home/postgres/data
+
+COPY postgresql.conf /home/postgres/data
+COPY pg_hba.conf /home/postgres/data
+
+CMD pg_ctl -D /home/postgres/data start -l /home/postgres/data/log && tail -f /home/postgres/data/log
+
+HEALTHCHECK --interval=1m --timeout=30s --retries=3 CMD pg_isready || exit 1
+EXPOSE 5432

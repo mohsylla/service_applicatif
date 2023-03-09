@@ -1,0 +1,24 @@
+FROM archlinux:base
+
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm jre-openjdk-headless jre-openjdk jdk-openjdk openjdk-doc openjdk-src wget
+RUN useradd -r -d /opt/tomcat/ -s /bin/false -c "Tomcat User" tomcat
+
+WORKDIR /tmp
+
+RUN wget https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.87/bin/apache-tomcat-8.5.87.tar.gz
+RUN mkdir /opt/tomcat \
+&& tar xzf apache-tomcat-8.5.87.tar.gz -C /opt/tomcat --strip-components=1 \
+&& chown -R tomcat: /opt/tomcat/ \
+&& rm apache-tomcat-8.5.87.tar.gz
+
+WORKDIR /opt/tomcat/bin
+USER tomcat
+
+COPY context.xml /opt/tomcat/webapps/manager/META-INF
+COPY tomcat-users.xml /opt/tomcat/conf
+
+CMD ./startup.sh && tail -f /opt/tomcat/logs/catalina.out
+
+HEALTHCHECK --interval=1m --timeout=30s --retries=3 CMD curl --fail localhost:8080 || exit 1
+EXPOSE 8080

@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+
+  postgres:
+    container_name: devops_postgres
+    expose:
+      - 5432
+    ports:
+      - '5432:5432'
+    build: 
+      context: ./postgres
+      dockerfile: dockerfile
+    networks:
+      devops_network:
+       ipv4_address: 192.19.0.2
+
+  tomcat:
+    container_name: devops_tomcat
+    build: 
+      context: ./tomcat
+      dockerfile: dockerfile
+    expose:
+      - 8080
+    ports:
+      - '8080:8080'
+    networks:
+      devops_network:
+       ipv4_address: 192.19.0.3
+
+networks:
+  devops_network:
+    ipam:
+      config:
+        - subnet : 192.19.0.0/28
